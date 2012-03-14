@@ -1,0 +1,574 @@
+%\VignetteIndexEntry{VegaMC}
+%\VignetteDepends{}
+%\VignetteKeywords{CGH Analysis}
+%\VignettePackage{VegaMC}
+\documentclass[a4paper,10pt]{article}
+
+
+
+\usepackage{graphicx}
+\usepackage{enumerate}
+\renewcommand{\labelitemi}{$\diamond$}
+
+\usepackage[colorlinks=true]{hyperref}
+\hypersetup{
+bookmarksnumbered=true,
+linkcolor=black,
+citecolor=black,
+pagecolor=black,
+urlcolor=black,
+}
+
+%opening
+\title{VegaMC: A Package Implementing a Variational Piecewise Smooth Model
+for Identification of Driver Chromosomal Imbalances in Cancer}
+
+\author{Sandro Morganella \and Michele Ceccarelli}
+
+\date{}
+\usepackage{Sweave}
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Overview}
+VegaMC enables the detection of driver chromosomal imbalances (deletion,
+amplification and loss of heterozygosity (LOH)) from array comparative
+genomic hybridization (aCGH) data. VegaMC performs a joint segmentation of
+aCGH data coming from a cohort of disease affected patients. Segmented
+regions are used into a statistical framework to distinguish between driver
+and passenger mutations. In this way, significant imbalances can be
+detected by the associated $p$-values. A very interesting feature of
+VegaMC, is that, it has been implemented to be easily integrated with the
+output produced by PennCNV tool \cite{PennCNV}. PennCNV is a widely used
+tool in Bioinformatics, it analyzes raw files and produces for each probe
+the respective value of Log R Ratio (LRR) and B Allele Frequency (BAF). In
+addition, VegaMC produces in output two web pages allowing a rapid
+navigation between both detected regions and altered genes. In the
+web page that summarizes the altered genes, the user finds the link to the
+respective Ensembl gene web page. An accurate implementation of the
+algorithm allows the accurate and rapid detection of significant
+chromosomal imbalances.\newline\newline
+Below we lists the main interesting features of VegaMC:
+\begin{itemize}
+\item Designed to be integrated within PennCNV protocol
+\item Detection of LOH alterations
+\item Two web pages enable an easily and rapid navigation of both detected
+regions and altered genes
+\item Accurate analysis of large datasets in a short time
+\end{itemize}
+
+For More details
+on the usage of VegaMC visit the home page of the package:\newline
+
+\url{http://bioinformatics.biogem.it/download/vegamc/vegamc}
+
+
+\section{Installation and Dependencies}
+In order to install VegaMC from Bioconductor repository start R and enter:
+
+\begin{verbatim}
+
+> source("http://bioconductor.org/biocLite.R")
+> biocLite("VegaMC")
+\end{verbatim}
+
+You can load all functions of VegaMC by entering:
+
+<<library_VegaMC>>=
+library(VegaMC)
+@
+
+In order to download gene information, VegaMC need of biomaRt that
+provides an interface to BioMart databases (e.g. Ensembl, COSMIC ,Wormbase
+and Gramene). In addition VegaMC is compatible with the genoset package
+that offers an extension of the Bioconductor {\ttfamily
+eSet} object for genome arrays.
+
+\section{Input Data Format}
+The main input of VegaMC is the dataset file that has a row for each probe.
+The first three columns of the file specify:
+\begin{itemize}
+\item The probe name
+\item The chromosome in which the probe is located
+\item The genomic position of the probe
+\end{itemize}
+
+
+The other columns of the matrix report the LRRs observed for the probe (and
+optionally the BAFs). \textbf{Note that this format reflects the format of
+PennCNV}. An example of input file can be found in {\ttfamily
+inst/template} folder (breast\_Affy500K.txt).
+
+\begin{center}
+\begin{table}[h]
+
+\begin{tabular}{|p{12cm}|}
+\hline
+\textbf{Note that the probes must be ordered by the respective genomic
+positions within the chromosome. In some cases (as for PennCNV) data are
+not sorted. VegaMC provides a function that performs this sorting:
+{\ttfamily sortData} (see Section \ref{gist}).}\\\hline
+\end{tabular}
+\end{table}
+\end{center}
+
+In VegaMC the user can find an example dataset (breast\_Affy500K.txt)
+composed of 10 breast tumor aCGH samples profiled by high-resolution
+Affymetrix 500K Mapping Array (GEO accession GSE7545) \cite{Dataset}. Raw
+data were  preprocessed in accord to PennCNV protocol and both LRR and BAF
+were obtained. For space requirements only the observation for the first 4
+chromosomes are reported, the complete dataset is available at:\newline
+
+\url{http://bioinformatics.biogem.it/download/vegamc/vegamc}
+\newline\newline
+
+In order to copy the example dataset in the current work directory enter:
+
+<<copy_dataset>>=
+file.copy(system.file("example/breast_Affy500K.txt",
+    package="VegaMC"),".")
+@
+
+\begin{center}
+\begin{table}[h]
+
+\begin{tabular}{|p{12cm}|}
+\hline
+\textbf{Note that LRR and BAF of a sample must be reported in this order:
+LRR followed by BAF. breast\_Affy500K.txt agrees with this format.}\\\hline
+\end{tabular}
+\end{table}
+\end{center}
+
+
+\section{VegaMC}
+VegaMC analysis is composed by three different steps: segmentation of the
+dataset, classification of the regions, assessment of statistical
+significance for each region. In the next sections all steps are
+described providing also a description of their main specific input
+parameters.
+
+
+\subsection{Segmentation}
+VegaMC performs a joint segmentation of all samples to detect the regions
+that have a similar LRR profile among the samples. In order to perform this
+joint segmentation, VegaMC extends an algorithm based on a
+popular variational model \cite{Morganella2010}. In particular, VegaMC
+implements the weighted multi-channel version of this model. Segmentation
+is separately performed on each chromosome and results are strictly related
+to the so called scale parameter: as the scale grows the segmentation
+gets coarser. In VegaMC a data-driven approach is used to compute the
+optimal scale value: VegaMC computes the jump of the scale required to
+merge two adjacent regions (parameter {\ttfamily beta} of VegaMC). if the
+allowed jump ({\ttfamily beta}) is $0$ then the computed segmentation will
+be composed of $N$ regions (each region will contain just a probe). In
+contrast, if the allowed jump is very large (ideally $\infty$) then the
+segmentation will contain just a region for each chromosome.
+
+
+\subsection{Classification}
+Aim of classification step is the labeling of each detected region. For
+each detected region and for each sample, classification looks for
+deletions, amplifications and LOHs (if BAF is observed). This step is
+performed by a threshold-based approach.
+
+
+\subsubsection{Classification of Deletions and Amplifications}
+In order to distinguish between deleted and amplified regions, two
+thresholds are used. Given the region $i$ of the sample $j$ then:
+\begin{itemize}
+\item the region is considered as a deletion
+if$\vert\vert\mu_{ij}\vert\vert<$ {\ttfamily loss\_threshold}
+\item the region
+is considered as an amplification if $\vert\vert\mu_{ij}\vert\vert>$
+{\ttfamily gain\_threshold}
+\end{itemize}
+where
+$\vert\vert\mu_{ij}\vert\vert$ is the respective mean.
+
+
+\subsubsection{Classification of LOHs}
+LOH is receiving greater attention as a mechanism of possible tumor
+initiation. LOH is located in region with no copy number alteration
+(LRR$=0$) and it is characterized by a BAF trend that moves away from the
+value of $0.5$ corresponding to heterozygous genotype AB.\newline\newline
+In order to detect LOH regions, two parameters are used:
+\begin{itemize}
+\item {\ttfamily loh\_threshold}: BAF values out of the range:\newline
+$]${\ttfamily loh\_threshold},$(1-${\ttfamily loh\_threshold}$)[$ \newline
+are considered to belong to homozygous genotypes AA and BB.
+\item {\ttfamily loh\_frequency}: Minimum fraction of homozygous genotypes
+needed for marking a region as LOH.
+\end{itemize}
+In other words, given the region $i$ of the sample $j$, the region is
+considered to be a LOH if:
+\begin{equation}
+\big( \sum_{ij}
+(BAF)\notin~]\mbox{{\ttfamily loh\_threshold}},(1-\mbox{{\ttfamily
+loh\_threshold}})[~~\big) > \mbox{{\ttfamily loh\_frequency}}
+\end{equation}
+\begin{center}
+\begin{table}[h]
+
+\begin{tabular}{|p{12cm}|}
+\hline
+\textbf{Note that in order to detect LOHs, the dataset must contain the BAF
+associated to each observed probe. This is the case of the
+example file in /{\ttfamily inst/template} folder
+breast\_Affy500K.txt}\\\hline
+\end{tabular}
+\end{table}
+\end{center}
+
+
+
+\subsection{Assessment of Statistical Significance}
+The main problem in identification of chromosomal imbalances is the
+distinction between driver and passenger mutations. Driver alterations are
+functionally related to the disease under study, while, passenger
+alterations are subject-specific random somatic mutations. Aim of this step
+is the computation of the $p$-value associated to each segmented region,
+which provides the evidence for driver mutations. VegaMC assigns a
+$p$-value to each possible aberration: loss (deletion), gain
+(amplification) and LOH. Here we use an approach similar to the one
+described in \cite{Morganella2011}. Starting from a discretized
+representation of the data obtained by the classification step, VegaMC
+performs a conservative permutation test to obtain the null distribution
+associated to the hypothesis: \textit{All observed aberrations are
+passengers}.
+
+
+
+\section{VegaMC: Run Analysis}
+In order to perform the analysis, the user needs to call only the
+function {\ttfamily vegaMC}. Below, the list of the input argument of this
+function are listed:
+
+\begin{itemize}
+\item {\ttfamily dataset}: The file containing the observations for dataset
+under inspection. The first three columns describe the name, the chromosome
+and the position respectively. The other columns of the matrix report the
+LRR and the BAF (if available) of each sample.
+
+
+\item {\ttfamily
+output\_file\_name}: (Default {\ttfamily output}) The file name used to
+save the results.
+
+\item {\ttfamily
+beta}: (Default $0.5$) This parameter is used in the segmentation step to
+compute the stop condition. This parameter specifies the maximum jump
+allowed for the updating of the scale parameter. If {\ttfamily beta}=$0$
+then the computed segmentation will be composed of a region for each probe
+(all regions will contain just a probe). In contrast, if {\ttfamily
+beta}$\rightarrow\infty$) then the segmentation will contain just a region
+for each chromosome.
+
+\item {\ttfamily min\_region\_bp\_size}: (Default $1000$) VegaMC
+does not report the regions short then this size (in bp). Note that this is
+only an output parameter, indeed, VegaMC also uses the \lq\lq
+short\rq\rq~regions in all
+algorithmic steps.
+
+\item {\ttfamily loss\_threshold}: (Default $-0.2$) Value used to mark a
+region as a deletion (loss). If the wighted mean of a region
+$\vert\vert\mu_{ij}\vert\vert$ is lower than this threshold, then the
+region is marked as a deletion (loss).
+
+\item {\ttfamily loss\_threshold}: (Default $0.2$) Value used to mark a
+region as an amplification (gain). If the wighted mean of a region
+$\vert\vert\mu_{ij}\vert\vert$ is greater than this threshold, then the
+region is marked as an amplification (gain).
+
+\item {\ttfamily baf} : (Default {\ttfamily TRUE}) This parameter specifies
+if the dataset also contains BAF measurements. {\ttfamily baf}={\ttfamily
+TRUE} means that BAF measurements are available, in this case VegaMC is
+able to compute LOH imbalances. If {\ttfamily baf}={\ttfamily FALSE} the
+dataset only contains the LRR values and LOH detection is not possible.
+
+\item {\ttfamily loh\_threshold} : (Default $0.75$) Threshold used to
+distinguish between homozygous and heterozygous genotypes. If the BAF is
+greater than {\ttfamily loh\_threshold} or lower then ($1-${\ttfamily
+loh\_threshold}) then the respective probe is considered to be homozygous.
+
+\item {\ttfamily loh\_frequency} : (Default $0.8$) Minimum fraction of
+homozygous probes needed for marking a region as LOHs. Regions with a
+fraction of homozygous probes greater than this threshold are marked as
+LOH.
+
+\item {\ttfamily bs} : (Default $1000$) Number of permutation bootstraps
+performed to compute the null distribution.
+
+\item {\ttfamily pval\_threshold} : (Default $0.05$) Significance level
+used to reject the null hypothesis. If the $p$-value of an aberration
+(loss, gain, LOH) is not greater than this threshold, then the region is
+considered to be significant and, consequently, it is considered a driver
+mutation.
+
+\item {\ttfamily html} : (Default {\ttfamily TRUE}) If this value is
+{\ttfamily TRUE}, then in output will be produced an html file called
+{\ttfamily output\_file\_name}.html in which a summary of all detected
+regions is reported.
+
+\item {\ttfamily getGenes} : (Default {\ttfamily TRUE}) If this value is
+{\ttfamily TRUE}, then in output will be produced an html file called
+{\ttfamily output\_file\_name}Genes.html in which the list of all genes
+overlapping the significant regions is reported.
+
+\item{\ttfamily mart\_database}{(Default {\ttfamily ensembl}) BioMart
+database name you want to connect to. Possible database names can be
+retrieved
+with the function listMarts of biomaRt package.}
+
+
+\item {\ttfamily ensembl\_dataset} : (Default {\ttfamily
+hsapiens\_gene\_ensembl}) BioMart dataset used to get information from
+Ensembl BioMart database.
+\end{itemize}
+
+The following command performs the analysis on the breast dataset with
+default parameter settings:
+\begin{verbatim}
+> results <-
++ vegaMC("breast_Affy500K.txt",
++         output_file_name="breast.analysis.default");
+\end{verbatim}
+
+The next command
+performs the analysis with the following user-defined parameter setting:
+\begin{itemize}
+\item Increasing
+of the jump for the update of the scale parameter ({\ttfamily beta}) from
+default value of $0.5$ to $1$
+\item Removing
+regions shorter than $2000$ bp ({\ttfamily min\_region\_pb\_size})
+\item Increasing the number of permutation bootstraps  ({\ttfamily bs})
+from the default value of $1000$ to $5000$
+\item Generation of html pages disabled
+\end{itemize}
+
+
+<<runVegaMC_breast, results=hide, keep.source=TRUE>>=
+results <-
+vegaMC("breast_Affy500K.txt",
+	output_file_name="breast.analysis",
+	beta=1,	min_region_bp_size=2000, bs=5000,
+	html=FALSE, getGenes=FALSE)
+@
+
+
+\paragraph{Output}
+The function {\ttfamily vegaMC} returns a matrix with a row for each
+detected region. In addition this command also creates in the current
+folder the tab delimited file breast.analysis.default (reporting the matrix
+content of the matrix {\ttfamily results}), the html file
+breast.analysis.default.html (which provides both a summary of the input
+parameter setting and all detected regions) and the html file file
+breast.analysis.defaultGenes.html (which lists the genes overlapping the
+significant regions).
+
+
+\subsection{VegaMC: View Results}
+After the execution of the previous command, the object {\ttfamily results}
+contains all information on the detected regions. This object is a matrix
+having a row for each detected regions. The name of the columns can be
+displayed by using the following command:
+
+<<colnames_results, results=hide>>=
+colnames(results)
+@
+
+\begin{itemize}
+\item {\ttfamily
+Chromosome}: The chromosome of the region
+\item {\ttfamily
+bp Start}: The position in which the region starts (in bp)
+\item {\ttfamily
+bp End}: The position in which the region ends (in bp)
+\item {\ttfamily
+Region Size}: The size of the region (in bp)
+\item {\ttfamily
+Mean}: The weighted mean $\vert\vert\mu_{ij}\vert\vert$  of the
+region
+\item {\ttfamily
+Loss p-value}: The $p$-value associated to the probability to have a driver
+deletion
+\item {\ttfamily
+Gain p-value}: The $p$-value associated to the probability to have a driver
+amplification
+\item {\ttfamily
+LOH p-value}: The $p$-value associated to the probability to have a driver
+LOH
+\item {\ttfamily
+\% Loss}: The percentage of sample showing a deletion for this region
+\item {\ttfamily
+\% Gain}: The percentage of sample showing an amplification for this region
+\item {\ttfamily
+\% LOH}: The percentage of sample showing a LOH for this region
+\end{itemize}
+
+This matrix is automatically saved in the current work directory as a tab
+delimited file. For default the name used to save the file is {\ttfamily
+output}.
+
+In addition, VegaMC creates two html pages that can be visualized by a web
+browser. These web pages are created to provide a rapid and easy access to
+the produced results. For default, generation of html page is active and
+the file {\ttfamily output}.html and are {\ttfamily output}Genes.html are
+created in the current work directory. These pages are created when options
+{\ttfamily} html {\ttfamily getGenes} are {\ttfamily TRUE} (default
+values).
+
+
+\paragraph{output.html Web Page} This page reports a summary of the
+analysis and it is composed of several sections that can be easily
+navigated by using the link on the top of the page. The first section is
+\textbf{Summary of Input Parameters}, it contains the parameter setting
+used for the analysis. The second section is \textbf{Results Summary}, it
+reports the number of identified regions and the number of each specific
+mutation. The third section is \textbf{List of All Regions} in which the
+information contained in the matrix {\ttfamily results} are summarized.
+The next sections report the list of significant regions detected for each
+imbalances (deletion, amplification and LOH). Therefore, in each section we
+only find the regions that have a $p$-value lower than the specified
+threshold ($0.05$ for default). Tables can be sorted by column.
+
+
+\paragraph{outputGenes.html Web Page} This page shows all genes located
+into a significant region. For each gene a set of information is reported.
+The \textbf{Ensembl Gene ID} and the \textbf{External Gene ID} report the
+name of gene. By clicking on the Ensembl Gene ID the user is automatically
+redirected on the Ensembl web page of the gene. The genomic position of the
+gene and the respective \textbf{Strand} and \textbf{Cytoband} are also
+reported. In addition the table also contains a column with a description
+of the gene (if available in Ensembl BioMart database). The last column
+reports the $p$-value associated to the region overlapping the gene. Tables
+can sorted by column.
+
+
+\section{Analysis of Gastrointestinal Stromal Tumors (GIST) Dataset}
+\label{gist}
+From the home page of VegaMC you can download a tab delimited file
+(gist.lrr\_baf.txt) containing LRR and BAF for the dataset
+GISTs:\newline\newline
+
+\url{http://bioinformatics.biogem.it/download/vegamc/vegamc}
+\newline\newline
+GISTs data were published in \cite{Astolfi2010} where 25 fresh tissue
+specimens of GISTs were collected and hybridized by Affymetrix Genome Wide
+SNP 6.0 (GEO identifier GSE20710). Raw data were preprocessed by PennCNV
+tool and the available file is the output of PennCNV which contains
+observation for $\sim 1.6$ million of probes.
+
+The file produced by PennCNV is not sorted by the genomic position of the
+probe. VegaMC provides a function that sort the data.
+The function {\ttfamily sortData} takes in input a matrix and returns the
+matrix ordered by the genomic position. The arguments of this function
+follow:
+\begin{itemize}
+\item {\ttfamily
+dataset}: The matrix that have to be ordered
+\item {\ttfamily
+output\_file\_name}: The name used to save the results into a tab
+delimited file
+\end{itemize}
+
+
+Given that {\ttfamily gist} data is directly produced by PennCNV, default
+parameter setting can be used::
+\begin{verbatim}
+> sortData("gist.txt", "gist.sorted.txt")
+\end{verbatim}
+
+
+Now we are ready to run VegaMC. The following command performs a
+segmentation in which each segmented region must contain at least $5$
+probes and the resulting list of
+regions contains only the regions having size greater than $1000$ bp:
+\begin{verbatim}
+> gist.results <-
++     vegaMC("gist.sorted.txt",
++             output_file_name="gist.analysis.default",
++             min_region_bp_size=1000)
+\end{verbatim}
+Execution time of
+VegaMC on gist dataset is about $10$ minutes. This execution time is very
+interesting, given that gist dataset is not a toy example ($\sim 1.6$
+million of probes on each of the 25 samples). Execution time was measured
+on a Mac OS X with 4GB of RAM and CPU2$\times$2.8 GHz Quad-Core Intel Xeon.
+
+
+\section{Compatibility with Genoset eSet Objects}
+The genoset package offers an extension of the Bioconductor {\ttfamily
+eSet} object for genome arrays. By using genoset both LRR and BAF can be
+stored in slot similar to \lq\lq exprs\rq\rq~slot of the ExpressionSet.
+The following commands allow to create a {\ttfamily BAFSet}
+object containing both LRR and BAF:
+
+<<Create_BAFSet, results=hide, keep.source=TRUE>>=
+data(genoset)
+baf.ds = BAFSet(locData=locData.rd, lrr=fake.lrr, baf=fake.baf,
+                  pData=fake.pData, annotation="SNP6",
+                  universe="hg19" )
+@
+
+We can run VegaMC on {\ttfamily baf.ds} object in the as well as we run
+VegaMC on the file containing the observed data:
+
+<<runVegaMC_BAFSet, results=hide, keep.source=TRUE>>=
+genoset.results <- vegaMC(baf.ds,
+                output_file_name="genoset.analysis.default",
+                html=FALSE, getGenes=FALSE)
+@
+
+If only the LRRs are observed than we can create an object {\ttfamily
+CNSet} as follows:
+
+<<Create_CNSet, results=hide, keep.source=TRUE>>=
+cn.ds = CNSet(locData=locData.rd, cn=fake.lrr, pData=fake.pData,
+                annotation="SNP6", universe="hg19")
+@
+
+and we can run VegaMC by setting the parameter {\ttfamily baf=FALSE}:
+
+<<runVegaMC_CNSet, results=hide, keep.source=TRUE>>=
+genoset.results <- vegaMC(cn.ds,
+                output_file_name="genoset.analysis.default",
+                html=FALSE, getGenes=FALSE)
+@
+
+\begin{thebibliography}{}
+
+
+\bibitem{PennCNV}
+PennCNV: A free software tool for Copy Number Variation (CNV) detection
+from SNP genotyping arrays.
+\url{http://www.openbioinformatics.org/penncnv}.
+
+\bibitem{Dataset}
+Haverty PM. {\it et~al}. (2008). High-resolution genomic and expression
+analyses of copy number alterations in breast tumors. \textit{Genes
+Chromosomes Cancer} \textbf{47}(6):530-542.
+
+
+\bibitem{Morganella2010} Morganella S. {\it et~al}. (2010).VEGA:
+Variational segmentation for copy number detection. \textit{Bioinformatics}
+\textbf{26}(24):3020-3027.
+
+
+\bibitem{Morganella2011} Morganella S. {\it et~al}. (2011). Finding
+recurrent copy number alterations preserving within-sample homogeneity.
+\textit{Bioinformatics} \textbf{27}(21):2949-2956.
+
+
+\bibitem{Astolfi2010} Astolfi A. {\it et~al}. (2010). Molecular portrait of
+gastrointestinal stromal tumors: an integrative analysis of gene expression
+profiling and high-resolution genomic copy number. \textit{Laboratory
+Investigation} \textbf{90}(9):1285-1294.
+
+
+\end{thebibliography}
+\end{document}

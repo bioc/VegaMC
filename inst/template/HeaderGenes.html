@@ -1,0 +1,37 @@
+<html>
+<head>
+<title> @TITLE@ </title> 
+<script src="sorttable.js"></script>
+</head>
+<body>
+<table>
+<tr align="center">
+<td><center>
+<A href="http://bioinformatics.biogem.it">
+<IMG src="bioinfologo.png" height="100" align="left"></A>
+</td>
+<td>
+<br><center><h3><font color="blue">
+<strong> Analysis Report</strong></font></h3>
+<font size=2>Analysis Performed on: 
+<font color="blue"><strong>@DATE@</strong></font><br><br>
+<a href=@REGFILE@>Go to Region Summary</a><br><br>
+<a href="#List of Deleted Genes">List of Deleted Genes</a>
+<a href="#List of Amplified Genes">List of Amplified Genes</a>
+<a href="#List of LOH Genes">List of LOH Geness</a>
+</td>
+</tr>
+</table>
+</center></font><hr>
+<center><font color="blue"><strong>
+<h3><a name="Genes Summary">Results Summary</a></h3>
+</strong></font>
+<font size=2>
+Deleted Genes: 
+<font size=2 color="blue"><strong> @NDEL@ </strong></font><br>
+Amplificated Genes: 
+<font size=2 color="blue"><strong> @NAMP@ </strong></font><br>
+LOH Genes: 
+<font size=2 color="blue"><strong> @NLOH@ </strong></font><br>
+</font>
+</center><hr>
