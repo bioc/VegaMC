@@ -25,7 +25,8 @@
 }
 \usage{
     vegaMC(dataset, output_file_name="output", beta=0.5, 
-    min_region_bp_size=1000, loss_threshold=-0.2, gain_threshold=0.2, 
+    min_region_bp_size=1000, correction=FALSE, 
+    loss_threshold=-0.2, gain_threshold=0.2, 
     baf=TRUE, loh_threshold=0.75, loh_frequency=0.8, bs=1000, 
     pval_threshold=0.05, html=TRUE, getGenes=TRUE, 
     mart_database="ensembl", ensembl_dataset="hsapiens_gene_ensembl")
@@ -70,6 +71,9 @@
 
     \item{min_region_bp_size}{(Default 1000) VegaMC deletes from the list 
     the regions shorter then this size (in bp).}
+
+    \item{correction}{(Default FALSE) If this parameter is TRUE multiple 
+    testing corrections is performed.}
 
     \item{loss_threshold}{(Default -0.2) Values used to mark a region as a 
     deletion (loss). If the wighted mean of a region is lower than this 
@@ -144,7 +148,13 @@
     \item{\% Gain}{The percentage of samples showing an amplification for 
     this region.}
     \item{\% LOH}{The percentage of samples showing a LOH for this region.}
-
+    \item{Probe Size}{The number of probes composing the region.}
+    \item{Loss Mean}{Mean of LRR computed only on the samples that show a loss.}
+    \item{Gain Mean}{Mean of LRR computed only on the samples that show a gain.}
+    \item{LOH Mean}{Mean of LRR computed only on the samples that show a LOH.}
+    \item{Focal-score Loss}{Focal Score associated to deletion.}
+    \item{Focal-score Gain}{Focal Score associated to amplification.}
+    \item{Focal-score LOH}{Focal Score associated to LOH.}
     This matrix is automatically saved in the current work directory as a 
     tab delimited file. For default the name used to asave the file is 
     'output'.

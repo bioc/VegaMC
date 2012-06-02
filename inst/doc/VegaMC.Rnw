@@ -273,6 +273,9 @@ only an output parameter, indeed, VegaMC also uses the \lq\lq
 short\rq\rq~regions in all
 algorithmic steps.
 
+\item {\ttfamily classification} : (Default {\ttfamily FALSE}) If this
+value is TRUE multiple testing corrections is performed.
+
 \item {\ttfamily loss\_threshold}: (Default $-0.2$) Value used to mark a
 region as a deletion (loss). If the wighted mean of a region
 $\vert\vert\mu_{ij}\vert\vert$ is lower than this threshold, then the
@@ -408,6 +411,16 @@ LOH
 \% Gain}: The percentage of sample showing an amplification for this region
 \item {\ttfamily
 \% LOH}: The percentage of sample showing a LOH for this region
+\item{\ttfamily Probe Size}: The number of probes composing the region
+\item{\ttfamily Loss Mean}:Mean of LRR computed only on the samples that
+show a loss
+\item{\ttfamily Gain Mean}: Mean of LRR computed only on the samples that
+show a gain
+\item{\ttfamily LOH Mean}: Mean of LRR computed only on the samples that
+show a LOH
+\item{\ttfamily Focal-score Loss}: Focal Score associated to deletion
+\item{\ttfamily Focal-score Gain}:Focal Score associated to amplification
+\item{\ttfamily Focal-score LOH}: Focal Score associated to LOH
 \end{itemize}
 
 This matrix is automatically saved in the current work directory as a tab
