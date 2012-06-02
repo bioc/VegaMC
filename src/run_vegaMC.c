@@ -78,6 +78,10 @@ int *num_loss_sample;
 int *num_gain_sample;
 int *num_loh_sample;
 
+float *mean_loss;
+float *mean_gain;
+float *mean_loh;
+
 /*----------Start Function Headers ----------------*/
 
 int read_params(char *filename);
@@ -163,11 +167,13 @@ void write_segementation()
     FILE *file = fopen(output_file_name, "w");
     int i, len;
     char *line =
-        "Chr\tStart\tEnd\tSize\tMean\tL pv\tG pv\tLOH pv\t% L\t% G\t% LOH\n";
+"Chr\tStart\tEnd\tSize\tMean\tL pv\tG pv\tLOH pv\t% L\t%G\t%LOH\t\t\t\t\n";
     len = strlen(line);
     fwrite(line, len, 1, file);
     int chr, bpst, bpe, bps;
     float l2mean, lossp, gainp, lohp, lossprc, gainprc, lohprc;
+    int ps;
+    float ml, mg, mloh;
     for (i = 0; i < num_seg_regions; i++) {
         chr = seg_chromosomes[i];
         bpst = position_matrix[seg_start[i]];
@@ -176,38 +182,39 @@ void write_segementation()
         l2mean = seg_l2_mean[i];
         lossp = seg_loss_pval[i];
         lossprc = (float) ((float) seg_loss_perc[i] / (float) num_samples);
-        gainp = seg_gain_pval[i];
+	gainp = seg_gain_pval[i];
         gainprc = (float) ((float) seg_gain_perc[i] / (float) num_samples);
         lohp = seg_loh_pval[i];
         lohprc = (float) ((float) seg_loh_perc[i] / (float) num_samples);
+	ps = seg_size[i];
+	ml = mean_loss[i];
+	mg = mean_gain[i];
+	mloh = mean_loh[i];
+	
         if (bps > min_region_bp_size) {
             if (chr < 23) {
                 fprintf(file,
-                        "%d\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%d%%\t%d%%\t%d%%\n",
+	  "%d\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%f\t%f\t%f\n",
                         chr, bpst, bpe, bps, l2mean, lossp, gainp, lohp,
-                        (int) (lossprc * 100), (int) (gainprc * 100),
-                        (int) (lohprc * 100));
+                        (lossprc), (gainprc), (lohprc), ps, ml, mg, mloh);
             }
             if (chr == 23) {
                 fprintf(file,
-                        "X\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%d%%\t%d%%\t%d%%\n",
-                        bpst, bpe, bps, l2mean, lossp, gainp, lohp,
-                        (int) (lossprc * 100), (int) (gainprc * 100),
-                        (int) (lohprc * 100));
+	    "X\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%f\t%f\t%f\n",
+			bpst, bpe, bps, l2mean, lossp, gainp, lohp,
+			(lossprc), (gainprc), (lohprc), ps, ml, mg, mloh);
             }
             if (chr == 24) {
                 fprintf(file,
-                        "Y\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%d%%\t%d%%\t%d%%\n",
-                        bpst, bpe, bps, l2mean, lossp, gainp, lohp,
-                        (int) (lossprc * 100), (int) (gainprc * 100),
-                        (int) (lohprc * 100));
+	    "Y\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%f\t%f\t%f\n",
+			bpst, bpe, bps, l2mean, lossp, gainp, lohp,
+			(lossprc), (gainprc), (lohprc), ps, ml, mg, mloh);
             }
             if (chr == 25) {
                 fprintf(file,
-                        "MT\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%d%%\t%d%%\t%d%%\n",
-                        bpst, bpe, bps, l2mean, lossp, gainp, lohp,
-                        (int) (lossprc * 100), (int) (gainprc * 100),
-                        (int) (lohprc * 100));
+		"MT\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%f\t%f\t%f\n",
+			bpst, bpe, bps, l2mean, lossp, gainp, lohp,
+			(lossprc), (gainprc), (lohprc), ps, ml, mg, mloh);
             }
         }
     }
@@ -250,7 +257,7 @@ void compute_pvalue()
         }
     }
 
-    for (j = num_samples; j >= 0; j--) {
+    for (j = num_samples-1; j >= 0; j--) {
         null_dist_loss[j] += null_dist_loss[j + 1];
         null_dist_gain[j] += null_dist_gain[j + 1];
         null_dist_loh[j] += null_dist_loh[j + 1];
@@ -280,14 +287,24 @@ void compute_matrices()
     num_loss_sample = malloc(sizeof(int) * num_samples);
     num_gain_sample = malloc(sizeof(int) * num_samples);
     num_loh_sample = malloc(sizeof(int) * num_samples);
-
+    
+    mean_loss = malloc(sizeof(float) * num_seg_regions);
+    mean_gain = malloc(sizeof(float) * num_seg_regions);
+    mean_loh = malloc(sizeof(float) * num_seg_regions);
+    
+    float m;
     int s, i, j, k;
     for (j = 0; j < num_samples; j++) {
         num_loss_sample[j] = 0;
         num_gain_sample[j] = 0;
         num_loh_sample[j] = 0;
+	
     }
     for (s = 0; s < num_seg_regions; s++) {
+	mean_loss[s]=0;
+	mean_gain[s]=0;
+	mean_loh[s]=0;
+	
         int start = seg_start[s];
         int end = seg_end[s];
         int size = seg_size[s];
@@ -312,26 +329,34 @@ void compute_matrices()
                     }
                 }
             }
-            float m = calc_mean(tmp_lrr, size);
+            m = calc_mean(tmp_lrr, size);
             if (m < loss_threshold) {
                 n_loss++;
                 num_loss_sample[j]++;
+		mean_loss[s]+=m;
             }
             if (m > gain_threshold) {
                 n_gain++;
                 num_gain_sample[j]++;
+		mean_gain[s]+=m;
             }
             if (baf[0] == 1) {
                 float p_baf = (float) n_baf / size;
                 if (!(m < loss_threshold || m > gain_threshold)
                     && p_baf > loh_frequency) {
+		    mean_loh[s]+=m;
                     n_loh++;
                 }
             }
         }
+     
         seg_loss_perc[s] = n_loss;
         seg_gain_perc[s] = n_gain;
         seg_loh_perc[s] = n_loh;
+	
+	mean_loss[s] = (float) mean_loss[s] / n_loss;
+	mean_gain[s] = (float) mean_gain[s] / n_gain;
+	mean_loh[s] = (float) mean_loh[s] / n_loh;
     }
 
 }

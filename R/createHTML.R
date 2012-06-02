@@ -2,7 +2,7 @@ createHTML <-
 function(output_file_name, segmentation, pval_threshold, loss_threshold,
         gain_threshold, loh_percentage, loh_threshold, baf, n_samples,
         n_probes, chromosomes, beta, min_region_bp_size,
-        bs, getGenes){
+        bs, getGenes, correction){
 ## This function generates the html file reporting the list
 ## (with the respective details) of each detected region
 
@@ -20,7 +20,7 @@ function(output_file_name, segmentation, pval_threshold, loss_threshold,
     n_gain <- length(gain_pos)
     n_loh = "No Available"
     if(baf==TRUE){
-        loh_pos <- which(as.numeric(segmentation[,8])<=pval_threshold)
+	loh_pos <- which(as.numeric(segmentation[,8])<=pval_threshold)
         n_loh <- length(loh_pos)
     }
 
@@ -59,7 +59,7 @@ function(output_file_name, segmentation, pval_threshold, loss_threshold,
     values <- c(values, LOHP=paste(format(as.integer(loh_percentage*100),
                         decimal.mark=","),"%"))
     values <- c(values, BS=format(bs, big.mark="."))
-    values <- c(values, PVAL=format(pval_threshold, decimal.mark=","))
+    values <- c(values, PVAL=format(pval_threshold, scientific=TRUE))
     values <- c(values, NUMREG=format(n_reg, big.mark="."))
     values <- c(values, NUMDEL=format(n_loss, big.mark="."))
     values <- c(values, NUMAMP=format(n_gain, big.mark="."))
@@ -67,6 +67,11 @@ function(output_file_name, segmentation, pval_threshold, loss_threshold,
         values <- c(values, NUMLOH=format(n_loh, big.mark="."))
     }else{
         values <- c(values, NUMLOH=n_loh)
+    }
+    if(correction==TRUE){
+	values <- c(values, SIGN="q")
+    }else{
+	values <- c(values, SIGN="p")
     }
     copySubstitute(inFile, outFile, values)
     close(inFile)
@@ -77,14 +82,24 @@ function(output_file_name, segmentation, pval_threshold, loss_threshold,
                 package="VegaMC")
     inFile <- file(inFile, "r")
     values <- c(values, VAL="NO")
+    if(correction==TRUE){
+	values <- c(values, SIGN="q")
+    }else{
+	values <- c(values, SIGN="p")
+    }
     copySubstitute(inFile, outFile, values)
     close(inFile)
 
     ## Insert a new Line for each region
     segmentation[,2:4] <- format(as.integer(segmentation[,2:4]),
                     big.mark=".")
-    segmentation[,5:8] <- format(as.numeric(segmentation[,5:8]),
+    segmentation[,c(5,13:15)] <- format(as.numeric(segmentation[,c(5,13:15)]),
                     decimal.mark=",")
+   
+    segmentation[,6:8] <- format(round(as.numeric(segmentation[,6:8]), 5),
+				decimal.mark=",")
+    segmentation[,16:18] <- format(round(as.numeric(segmentation[,16:18]), 5),
+				decimal.mark=",")
     for(i in 1:n_reg){
         inFile <- system.file("template/AllRegionTableRow.html",
                     package="VegaMC")
@@ -113,33 +128,43 @@ function(output_file_name, segmentation, pval_threshold, loss_threshold,
     close(inFile)
 
     if(length(loss_pos)>0){
+	tmp <- segmentation[loss_pos,]
+	tmp <- tmp[order(as.numeric(substr(tmp[,9], 1, nchar(tmp[,9])-1)),
+		    decreasing=TRUE),]
         ## Create the Header for the Table of Deleted Regions
         inFile <- system.file("template/HeaderTableAberrantRegions.html",
                     package="VegaMC")
         inFile <- file(inFile, "r")
         values <- c(values, TABNAME="Deleted", ABERR="Loss")
+	if(correction==TRUE){
+	    values <- c(values, SIGN="q")
+	}else{
+	    values <- c(values, SIGN="p")
+	}
         copySubstitute(inFile, outFile, values)
         close(inFile)
         ## Insert a new Line for each region
-        for(i in loss_pos){
+        for(i in 1:length(loss_pos)){
             inFile <- system.file(
                     "template/AberrantRegionTableRow.html",
                     package="VegaMC")
             inFile <- file(inFile, "r")
             values <- c()
-            values <- c(CHR=as.character(segmentation[i,1]))
+            values <- c(CHR=as.character(tmp[i,1]))
             values <- c(values,
-                    BPSTART=as.character(segmentation[i,2]))
+                    BPSTART=as.character(tmp[i,2]))
             values <- c(values,
-                    BPEND=as.character(segmentation[i,3]))
+                    BPEND=as.character(tmp[i,3]))
             values <- c(values,
-                    BPSIZE=as.character(segmentation[i,4]))   
+                    BPSIZE=as.character(tmp[i,4]))   
             values <- c(values,
-                    L2MEAN=as.character(segmentation[i,5]))   
+                    L2MEAN=as.character(tmp[i,13]))   
             values <- c(values,
-                    ABERRPVAL=as.character(segmentation[i,6]))
+                    ABERRPVAL=as.character(tmp[i,6]))
             values <- c(values,
-                    ABERRPRC=as.character(segmentation[i,9]))
+                    ABERRPRC=as.character(tmp[i,9]))
+	    values <- c(values,
+                    FOC=as.character(tmp[i,16]))
             copySubstitute(inFile, outFile, values)
             close(inFile)
         }
@@ -153,33 +178,43 @@ function(output_file_name, segmentation, pval_threshold, loss_threshold,
     }
 
     if(length(gain_pos)>0){
+	tmp <- segmentation[gain_pos,]
+	tmp <- tmp[order(as.numeric(substr(tmp[,10], 1, nchar(tmp[,10])-1)),
+		    decreasing=TRUE),]
         ## Create the Header for the Table of Amplified Regions
         inFile <- system.file("template/HeaderTableAberrantRegions.html",
                     package="VegaMC")
         inFile <- file(inFile, "r")
         values <- c(values, TABNAME="Amplified", ABERR="Gain")
+	if(correction==TRUE){
+	    values <- c(values, SIGN="q")
+	}else{
+	    values <- c(values, SIGN="p")
+	}
         copySubstitute(inFile, outFile, values)
         close(inFile)
         ## Insert a new Line for each region
-        for(i in gain_pos){
+        for(i in 1:length(gain_pos)){
             inFile <- system.file(
                     "template/AberrantRegionTableRow.html",
                     package="VegaMC")
             inFile <- file(inFile, "r")
             values <- c()
-            values <- c(CHR=as.character(segmentation[i,1]))
+            values <- c(CHR=as.character(tmp[i,1]))
             values <- c(values,
-                    BPSTART=as.character(segmentation[i,2]))
+                    BPSTART=as.character(tmp[i,2]))
             values <- c(values,
-                    BPEND=as.character(segmentation[i,3]))
+                    BPEND=as.character(tmp[i,3]))
             values <- c(values,
-                    BPSIZE=as.character(segmentation[i,4]))   
+                    BPSIZE=as.character(tmp[i,4]))   
             values <- c(values,
-                    L2MEAN=as.character(segmentation[i,5]))   
+                    L2MEAN=as.character(tmp[i,14]))   
             values <- c(values,
-                    ABERRPVAL=as.character(segmentation[i,7]))
+                    ABERRPVAL=as.character(tmp[i,7]))
             values <- c(values,
-                    ABERRPRC=as.character(segmentation[i,10]))
+                    ABERRPRC=as.character(tmp[i,10]))
+	    values <- c(values,
+                    FOC=as.character(tmp[i,17]))
             copySubstitute(inFile, outFile, values)
             close(inFile)
         }
@@ -194,32 +229,42 @@ function(output_file_name, segmentation, pval_threshold, loss_threshold,
 
     if(baf==TRUE){
         if(length(loh_pos)>0){
+	    tmp <- segmentation[loh_pos,]
+	    tmp <- tmp[order(as.numeric(substr(tmp[,11], 1, nchar(tmp[,11])-1)),
+			decreasing=TRUE),]
             inFile <- system.file(
                     "template/HeaderTableAberrantRegions.html",
                     package="VegaMC")
             inFile <- file(inFile, "r")
             values <- c(values, TABNAME="LOH", ABERR="LOH")
+	    if(correction==TRUE){
+		values <- c(values, SIGN="q")
+	    }else{
+		values <- c(values, SIGN="p")
+	    }
             copySubstitute(inFile, outFile, values)
             close(inFile)
-            for(i in loh_pos){
+            for(i in 1:length(loh_pos)){
                 inFile <- system.file(
                     "template/AberrantRegionTableRow.html",
                     package="VegaMC")
                 inFile <- file(inFile, "r")
                 values <- c()
-                values <- c(CHR=as.character(segmentation[i,1]))
+                values <- c(CHR=as.character(tmp[i,1]))
                 values <- c(values,
-                    BPSTART=as.character(segmentation[i,2]))
+                    BPSTART=as.character(tmp[i,2]))
                 values <- c(values,
-                    BPEND=as.character(segmentation[i,3]))
+                    BPEND=as.character(tmp[i,3]))
                 values <- c(values,
-                    BPSIZE=as.character(segmentation[i,4]))   
+                    BPSIZE=as.character(tmp[i,4]))   
                 values <- c(values,
-                    L2MEAN=as.character(segmentation[i,5]))   
+                    L2MEAN=as.character(tmp[i,15]))   
                 values <- c(values,
-                    ABERRPVAL=as.character(segmentation[i,7]))
+                    ABERRPVAL=as.character(tmp[i,8]))
                 values <- c(values,
-                    ABERRPRC=as.character(segmentation[i,10]))
+                    ABERRPRC=as.character(tmp[i,11]))
+		values <- c(values,
+                    FOC=as.character(tmp[i,18]))
                 copySubstitute(inFile, outFile, values)
                 close(inFile)
             }
