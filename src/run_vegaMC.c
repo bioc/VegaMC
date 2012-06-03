@@ -353,10 +353,15 @@ void compute_matrices()
         seg_loss_perc[s] = n_loss;
         seg_gain_perc[s] = n_gain;
         seg_loh_perc[s] = n_loh;
-	
-	mean_loss[s] = (float) mean_loss[s] / n_loss;
-	mean_gain[s] = (float) mean_gain[s] / n_gain;
-	mean_loh[s] = (float) mean_loh[s] / n_loh;
+	if(n_loss > 0){
+	    mean_loss[s] = (float) mean_loss[s] / n_loss;
+	}
+	if(n_gain > 0){
+	    mean_gain[s] = (float) mean_gain[s] / n_gain;
+	}
+	if(n_loh > 0){
+	    mean_loh[s] = (float) mean_loh[s] / n_loh;
+	}
     }
 
 }
