@@ -3,7 +3,7 @@ Type: Package
 Title: VegaMC: A Package Implementing a Variational Piecewise Smooth
         Model for Identification of Driver Chromosomal Imbalances in
         Cancer
-Version: 2.1.0
+Version: 2.2.0
 Date: 2012-06-02
 Author: S. Morganella and M. Ceccarelli
 Maintainer: Sandro Morganella <morganella@unisannio.it>
