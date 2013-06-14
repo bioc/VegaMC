@@ -4,11 +4,11 @@ convertGenoset <- function(genosetElem, isbaf)
 
     if (isbaf == TRUE)
         {
-            lrr <- assayData(genosetElem) $lrr
-            baf <- assayData(genosetElem) $baf
+            lrr <- assayData(genosetElem)$lrr
+            baf <- assayData(genosetElem)$baf
     } else
         {
-            lrr <- assayData(genosetElem) $cn
+            lrr <- assayData(genosetElem)$lrr
         }
 
     samples <- sampleNames(genosetElem)

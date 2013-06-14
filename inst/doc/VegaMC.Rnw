@@ -518,12 +518,12 @@ on a Mac OS X with 4GB of RAM and CPU2$\times$2.8 GHz Quad-Core Intel Xeon.
 The genoset package offers an extension of the Bioconductor {\ttfamily
 eSet} object for genome arrays. By using genoset both LRR and BAF can be
 stored in slot similar to \lq\lq exprs\rq\rq~slot of the ExpressionSet.
-The following commands allow to create a {\ttfamily BAFSet}
+The following commands allow to create a {\ttfamily GenoSet}
 object containing both LRR and BAF:
 
 <<Create_BAFSet, results=hide, keep.source=TRUE>>=
 data(genoset)
-baf.ds = BAFSet(locData=locData.rd, lrr=fake.lrr, baf=fake.baf,
+baf.ds = GenoSet(locData=locData.gr, lrr=fake.lrr, baf=fake.baf,
                   pData=fake.pData, annotation="SNP6",
                   universe="hg19" )
 @
@@ -534,14 +534,14 @@ VegaMC on the file containing the observed data:
 <<runVegaMC_BAFSet, results=hide, keep.source=TRUE>>=
 genoset.results <- vegaMC(baf.ds,
                 output_file_name="genoset.analysis.default",
-                html=FALSE, getGenes=FALSE)
+                html=FALSE, getGenes=FALSE, baf=TRUE)
 @
 
 If only the LRRs are observed than we can create an object {\ttfamily
-CNSet} as follows:
+GenoSet} as follows:
 
 <<Create_CNSet, results=hide, keep.source=TRUE>>=
-cn.ds = CNSet(locData=locData.rd, cn=fake.lrr, pData=fake.pData,
+cn.ds = GenoSet(locData=locData.gr, lrr=fake.lrr, pData=fake.pData,
                 annotation="SNP6", universe="hg19")
 @
 
@@ -550,7 +550,7 @@ and we can run VegaMC by setting the parameter {\ttfamily baf=FALSE}:
 <<runVegaMC_CNSet, results=hide, keep.source=TRUE>>=
 genoset.results <- vegaMC(cn.ds,
                 output_file_name="genoset.analysis.default",
-                html=FALSE, getGenes=FALSE)
+                html=FALSE, getGenes=FALSE, baf=FALSE)
 @
 
 \begin{thebibliography}{}
