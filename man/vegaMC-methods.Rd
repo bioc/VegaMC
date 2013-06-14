@@ -2,9 +2,8 @@
 \docType{methods}
 \alias{vegaMC}
 \alias{vegaMC-methods}
-\alias{vegaMC,BAFSet-method}
 \alias{vegaMC,character-method}
-\alias{vegaMC,CNSet-method}
+\alias{vegaMC,GenoSet-method}
 \title{
     Class aggregator of VegaMC.
 }
@@ -38,21 +37,16 @@
 			This method allows to run VegaMC on a data file in PennCNV format. 
 		}
 
-		\item{\code{signature(dataset = "BAFSet")}}{
-			This method allows to run VegaMC on a BAFSet object of 
+		\item{\code{signature(dataset = "GenoSet")}}{
+			This method allows to run VegaMC on a GenoSet object of 
 			\code{genoset} package. 
-		}
-
-		\item{\code{signature(dataset = "CNSet")}}{
-			This method allows to run VegaMC on a BAFSet object of 
-			\code{genoset} package
 		}
 	}
 }
 
 \arguments{
 
-    \item{dataset}{Dataset file, BAFSet or CNSet object. If the argument is the 
+    \item{dataset}{Dataset file, GenoSet object. If the argument is the 
     data file, then it must follows the PennCNV format: The first three columns 
     describe the name, the chromosome and the position respectively. 
     The other columns of the matrix report the LRR and the BAF 
@@ -173,21 +167,21 @@
     results <- vegaMC("breast_Affy500K.txt", "results", html=FALSE, 
                         getGenes=FALSE)
                         
-    ## Run VegaMC using in input 'genoset' BAFSet Objects
+    ## Run VegaMC using in input 'genoset' GenoSet Objects with BAF
     data(genoset)
-	baf.ds = BAFSet( locData=locData.rd, lrr=fake.lrr, baf=fake.baf, 
+	baf.ds = GenoSet( locData=locData.gr, lrr=fake.lrr, baf=fake.baf, 
 					pData=fake.pData, annotation="SNP6", universe="hg19" )
 	genoset.results <- vegaMC(baf.ds, 
 							output_file_name="genoset.analysis.default",
-							html=FALSE, getGenes=FALSE)
+							html=FALSE, getGenes=FALSE, baf=TRUE)
 
-	## Run VegaMC using in input 'genoset' CNSet Objects
+	## Run VegaMC using in input 'genoset' GenoSet Objects with only LRR
     data(genoset)
-	cn.ds = CNSet( locData=locData.rd, cn=fake.lrr, pData=fake.pData, 
+	cn.ds = GenoSet( locData=locData.gr, lrr=fake.lrr, pData=fake.pData, 
 					annotation="SNP6", universe="hg19" )
 	genoset.results <- vegaMC(cn.ds, 
 							output_file_name="genoset.analysis.default",
-							html=FALSE, getGenes=FALSE)
+							html=FALSE, getGenes=FALSE, baf=FALSE)
 
     
     
