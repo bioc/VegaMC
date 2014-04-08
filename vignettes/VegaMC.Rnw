@@ -524,8 +524,7 @@ object containing both LRR and BAF:
 <<Create_BAFSet, results=hide, keep.source=TRUE>>=
 data(genoset)
 baf.ds = GenoSet(locData=locData.gr, lrr=fake.lrr, baf=fake.baf,
-                  pData=fake.pData, annotation="SNP6",
-                  universe="hg19" )
+                  pData=fake.pData, annotation="SNP6")
 @
 
 We can run VegaMC on {\ttfamily baf.ds} object in the as well as we run
@@ -542,7 +541,7 @@ GenoSet} as follows:
 
 <<Create_CNSet, results=hide, keep.source=TRUE>>=
 cn.ds = GenoSet(locData=locData.gr, lrr=fake.lrr, pData=fake.pData,
-                annotation="SNP6", universe="hg19")
+                annotation="SNP6")
 @
 
 and we can run VegaMC by setting the parameter {\ttfamily baf=FALSE}:
