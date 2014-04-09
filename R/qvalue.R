@@ -20,7 +20,7 @@ tbl <- tabulate(bin);
 cs <- cumsum(tbl);
 tbl <- rep(cs, tbl);
 tbl[idx] <- tbl;
-#return(list(pi0,m,pval,tbl));
+
 qvalue <- pi0*m*pval/tbl;
 qvalue[u[m]] <- min(qvalue[u[m]],1);
 for(i in (m-1):1) {
