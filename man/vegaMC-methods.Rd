@@ -170,7 +170,7 @@
     ## Run VegaMC using in input 'genoset' GenoSet Objects with BAF
     data(genoset)
 	baf.ds = GenoSet( locData=locData.gr, lrr=fake.lrr, baf=fake.baf, 
-					pData=fake.pData, annotation="SNP6", universe="hg19" )
+					pData=fake.pData, annotation="SNP6")
 	genoset.results <- vegaMC(baf.ds, 
 							output_file_name="genoset.analysis.default",
 							html=FALSE, getGenes=FALSE, baf=TRUE)
@@ -178,7 +178,7 @@
 	## Run VegaMC using in input 'genoset' GenoSet Objects with only LRR
     data(genoset)
 	cn.ds = GenoSet( locData=locData.gr, lrr=fake.lrr, pData=fake.pData, 
-					annotation="SNP6", universe="hg19" )
+					annotation="SNP6")
 	genoset.results <- vegaMC(cn.ds, 
 							output_file_name="genoset.analysis.default",
 							html=FALSE, getGenes=FALSE, baf=FALSE)
