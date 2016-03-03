@@ -3,7 +3,7 @@
 \alias{vegaMC}
 \alias{vegaMC-methods}
 \alias{vegaMC,character-method}
-\alias{vegaMC,GenoSet-method}
+\alias{vegaMC}
 \title{
     Class aggregator of VegaMC.
 }
@@ -46,8 +46,7 @@
 
 \arguments{
 
-    \item{dataset}{Dataset file, GenoSet object. If the argument is the 
-    data file, then it must follows the PennCNV format: The first three columns 
+    \item{dataset}{Dataset file following the PennCNV format: The first three columns 
     describe the name, the chromosome and the position respectively. 
     The other columns of the matrix report the LRR and the BAF 
     (if available) of each sample. Note that observations must be ordered by the
@@ -155,35 +154,16 @@
 }
 \keyword{methods}
 \references{
-    For more details visit http://bioinformatics.biogem.it/download/vegamc
+    Morganella S., and Ceccarelli M. VegaMC: a R/bioconductor package for fast downstream analysis of large array comparative genomic hybridization datasets. Bioinformatics, 28(19):2512-4 (2012).
 }
 
 \author{
     Sandro Morganella
 }
 \examples{
-    ## Run VegaMC using in input a dataset file
+    ## Run VegaMC 
     file.copy(system.file("example/breast_Affy500K.txt", package="VegaMC"), ".")
     results <- vegaMC("breast_Affy500K.txt", "results", html=FALSE, 
                         getGenes=FALSE)
-                        
-    ## Run VegaMC using in input 'genoset' GenoSet Objects with BAF
-    data(genoset)
-	baf.ds = GenoSet( locData=locData.gr, lrr=fake.lrr, baf=fake.baf, 
-					pData=fake.pData, annotation="SNP6")
-	genoset.results <- vegaMC(baf.ds, 
-							output_file_name="genoset.analysis.default",
-							html=FALSE, getGenes=FALSE, baf=TRUE)
-
-	## Run VegaMC using in input 'genoset' GenoSet Objects with only LRR
-    data(genoset)
-	cn.ds = GenoSet( locData=locData.gr, lrr=fake.lrr, pData=fake.pData, 
-					annotation="SNP6")
-	genoset.results <- vegaMC(cn.ds, 
-							output_file_name="genoset.analysis.default",
-							html=FALSE, getGenes=FALSE, baf=FALSE)
-
-    
-    
-                  
+                                      
 }

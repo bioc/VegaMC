@@ -3,10 +3,10 @@ Type: Package
 Title: VegaMC: A Package Implementing a Variational Piecewise Smooth
         Model for Identification of Driver Chromosomal Imbalances in
         Cancer
-Version: 3.8.0
-Date: 2014-04-10
+Version: 3.8.1
+Date: 2015-03-03
 Author: S. Morganella and M. Ceccarelli
-Maintainer: Sandro Morganella <sandro@ebi.ac.uk>
+Maintainer: Sandro Morganella <morganellaalx@gmail.com>
 Description: This package enables the detection of driver chromosomal
         imbalances including loss of heterozygosity (LOH) from array
         comparative genomic hybridization (aCGH) data. VegaMC performs
@@ -20,7 +20,7 @@ Description: This package enables the detection of driver chromosomal
         genes, the link to the respective Ensembl gene web page is
         reported.
 License: GPL-2
-Depends: R (>= 2.10.0), biomaRt, Biobase, genoset
+Depends: R (>= 2.10.0), biomaRt, Biobase
 Imports: methods
 LazyLoad: yes
 biocViews: aCGH, CopyNumberVariation

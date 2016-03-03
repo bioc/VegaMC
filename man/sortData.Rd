@@ -27,8 +27,7 @@
 }
 
 \references{
-    For more details consult: 
-    \url{http://bioinformatics.biogem.it/download/vegamc}
+    Morganella S., and Ceccarelli M. VegaMC: a R/bioconductor package for fast downstream analysis of large array comparative genomic hybridization datasets. Bioinformatics, 28(19):2512-4 (2012).
 }
 
 \author{
