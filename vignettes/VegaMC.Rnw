@@ -71,8 +71,9 @@ In order to install VegaMC from Bioconductor repository start R and enter:
 
 \begin{verbatim}
 
-> source("http://bioconductor.org/biocLite.R")
-> biocLite("VegaMC")
+> if (!requireNamespace("BiocManager", quietly=TRUE))
+    > install.packages("BiocManager")
+> BiocManager::install("VegaMC")
 \end{verbatim}
 
 You can load all functions of VegaMC by entering:
